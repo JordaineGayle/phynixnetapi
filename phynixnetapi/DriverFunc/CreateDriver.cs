@@ -289,6 +289,14 @@ namespace phynixnetapi.DriverFunc
                 return (ActionResult)new OkObjectResult(ex);
             }
         }
+
+        [FunctionName("ConfirmTrip")]
+        public static async Task<IActionResult> ConfirmTrip([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req)
+        {
+
+
+            return null;
+        }
     }
 }
 
