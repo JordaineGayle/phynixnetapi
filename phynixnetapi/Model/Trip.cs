@@ -14,6 +14,10 @@ namespace phynixnetapi.Model
 
         public string UserId { get; set; }
 
+        public string Drivername { get; set; }
+
+        public string Username { get; set; }
+
         public double TotalTripPrice { get; set; }
 
         public Location Origin { get; set; }
