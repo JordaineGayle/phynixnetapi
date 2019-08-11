@@ -1,12 +1,15 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
-
+using Newtonsoft.Json;
 using phynixnetapi.Data;
 using phynixnetapi.Helpers;
 using phynixnetapi.Model;
@@ -16,30 +19,36 @@ namespace phynixnetapi.RiderFunc
     public static class CreateRider
     {
         [FunctionName("CreateRider")]
-        public static async Task<HttpResponseMessage> RiderCreate([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequestMessage req)
+        public static async Task<IActionResult> RiderCreate([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req)
         {
-			Rider user = await req.Content.ReadAsAsync<Rider>();
+           // req.IsValidToken();
+
+            //Rider user = await req.Content.ReadAsAsync<Rider>();
+
+            string requestBody = new StreamReader(req.Body).ReadToEnd();
+            Rider user = JsonConvert.DeserializeObject<Rider>(requestBody);
+
 			await RiderRepository<Rider>.Initialize();
 			if (user == null)
 			{
-				req.CreateResponse(HttpStatusCode.OK, "User cannot be null or empty");
+				return (ActionResult)new OkObjectResult("User cannot be null or empty");
 			}
 
 			if (string.IsNullOrEmpty(user.Email))
 			{
-				req.CreateResponse(HttpStatusCode.OK, "An email address is needed for this request");
+                return (ActionResult)new OkObjectResult("An email address is needed for this request");
 			}
 
 			var udb = RiderRepository<Rider>.GetItems($"Select * from RiderData u where u.Email = '{user.Email}'");
 
 			if (udb != null && udb.Count() > 0)
 			{
-				return req.CreateResponse(HttpStatusCode.OK, "Driver already exist, please login or activate account to continue");
+                return (ActionResult)new OkObjectResult("Rider already exist, please login or activate account to continue");
 			}
 
 			if (string.IsNullOrEmpty(user.Password))
 			{
-				req.CreateResponse(HttpStatusCode.OK, "A Password is needed for this request");
+                return (ActionResult)new OkObjectResult("A Password is needed for this request");
 			}
 
 			user.Password = user.Password.EncodeString();
@@ -52,18 +61,19 @@ namespace phynixnetapi.RiderFunc
 			{
 				dynamic u = await RiderRepository<Rider>.CreateItemAsync(user);
 
-				return req.CreateResponse(HttpStatusCode.OK, "Your account has been created. Admin will contact via the number provided to complete the activation process.");
+                return (ActionResult)new OkObjectResult("Your account has been created. Admin will contact via the number provided to complete the activation process.");
 			}
 			catch (Exception ex)
 			{
-				return req.CreateResponse(HttpStatusCode.OK, "An error has occured");
+                return (ActionResult)new OkObjectResult("An error has occured");
 			}
 			
 		}
 
         [FunctionName("GetAllRiders")]
-        public static async Task<HttpResponseMessage> GetAllRiders([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequestMessage req)
+        public static async Task<IActionResult> GetAllRiders([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             try
             {
                 //User user = await req.Content.ReadAsAsync<User>();
@@ -74,20 +84,21 @@ namespace phynixnetapi.RiderFunc
 
                 if (riders == null || riders.Count() <= 0)
                 {
-                    return req.CreateResponse(HttpStatusCode.NoContent, "No Avilable Riders In The System.");
+                    return (ActionResult)new OkObjectResult("No Avilable Riders In The System.");
                 }
 
-                return req.CreateResponse(HttpStatusCode.OK, riders);
+                return (ActionResult)new OkObjectResult(riders);
             }
             catch (Exception ex)
             {
-                return req.CreateResponse(HttpStatusCode.InternalServerError, ex);
+                return (ActionResult)new OkObjectResult(ex);
             }
         }
 
         [FunctionName("GetConnectedRiders")]
-        public static async Task<HttpResponseMessage> GetConnectedRiders([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequestMessage req)
+        public static async Task<IActionResult> GetConnectedRiders([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             try
             {
                 // User user = await req.Content.ReadAsAsync<Driver>();
@@ -98,14 +109,14 @@ namespace phynixnetapi.RiderFunc
 
                 if (drivers == null || drivers.Count() <= 0)
                 {
-                    return req.CreateResponse(HttpStatusCode.NoContent, "No Avilable Riders In The System.");
+                    return (ActionResult)new OkObjectResult("No Avilable Riders In The System.");
                 }
 
-                return req.CreateResponse(HttpStatusCode.OK, drivers);
+                return (ActionResult)new OkObjectResult(drivers);
             }
             catch (Exception ex)
             {
-                return req.CreateResponse(HttpStatusCode.InternalServerError, ex);
+                return (ActionResult)new OkObjectResult(ex);
             }
         }
 

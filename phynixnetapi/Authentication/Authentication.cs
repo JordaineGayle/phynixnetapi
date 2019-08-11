@@ -197,7 +197,7 @@ namespace phynixapi.Authentication
 
 					var tokens = new JwtSecurityToken(
 						issuer: "Phynix",
-						audience: "Phynic Inc",
+						audience: "Phynix Inc",
 						claims: claim,
 						notBefore: DateTime.Now.AddMinutes(1),
 						expires: DateTime.Now.AddDays(2),
@@ -227,6 +227,8 @@ namespace phynixapi.Authentication
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req,
             [SignalRConnectionInfo(HubName = "main",ConnectionStringSetting = "AzureSignalRConnection")] SignalRConnectionInfo connectionInfo)
         {
+            req.IsValidToken();
+
             return connectionInfo;
         }
 
@@ -235,6 +237,7 @@ namespace phynixapi.Authentication
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req,
             [SignalRConnectionInfo(HubName = "rider", ConnectionStringSetting = "AzureSignalRConnection")] SignalRConnectionInfo connectionInfo)
         {
+            req.IsValidToken();
             return connectionInfo;
         }
 
@@ -243,6 +246,7 @@ namespace phynixapi.Authentication
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req,
             [SignalRConnectionInfo(HubName = "driver", ConnectionStringSetting = "AzureSignalRConnection")] SignalRConnectionInfo connectionInfo)
         {
+            req.IsValidToken();
             return connectionInfo;
         }
 
@@ -251,6 +255,7 @@ namespace phynixapi.Authentication
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req,
             [SignalR(HubName = "driver", ConnectionStringSetting = "AzureSignalRConnection")]IAsyncCollector<SignalRMessage> message)
         {
+            req.IsValidToken();
             try
             {
                 string requestBody = new StreamReader(req.Body).ReadToEnd();

@@ -5,6 +5,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using Newtonsoft.Json;
 using phynixnetapi.Data;
+using phynixnetapi.Helpers;
 using phynixnetapi.Model;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace phynixnetapi
         [FunctionName("CreateTrip")]
         public static async Task<IActionResult> CreateTrip([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
 
             string requestBody = new StreamReader(req.Body).ReadToEnd();
             Trip trip = JsonConvert.DeserializeObject<Trip>(requestBody);
@@ -49,6 +51,7 @@ namespace phynixnetapi
         public static async Task<IActionResult> AcceptRider([HttpTrigger("post", Route = null)]HttpRequest req,
             [SignalR(HubName = "driver", ConnectionStringSetting = "AzureSignalRConnection")]IAsyncCollector<SignalRMessage> message)
         {
+            req.IsValidToken();
             try
             {
                 await message.AddAsync(
@@ -92,6 +95,7 @@ namespace phynixnetapi
         [FunctionName("GetTripsByDriver")]
         public static async Task<IActionResult> GetTripsByDriverAsync([HttpTrigger("get", Route =null)]HttpRequest req)
         {
+            req.IsValidToken();
             await TripRepository<Trip>.Initialize();
 
             string driverId = req.Query["driverid"];
@@ -109,6 +113,7 @@ namespace phynixnetapi
         [FunctionName("GetTrips")]
         public static async Task<IActionResult> GetTrips([HttpTrigger("get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             try
             {
                 //User user = await req.Content.ReadAsAsync<User>();
@@ -133,6 +138,7 @@ namespace phynixnetapi
         [FunctionName("GetTripsBasedOnRating")]
         public static async Task<IActionResult> GetTripsBasedOnRating([HttpTrigger("get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             await TripRepository<Trip>.Initialize();
 
             string rating = req.Query["rating"];
@@ -150,6 +156,7 @@ namespace phynixnetapi
         [FunctionName("GetTripByDate")]
         public static async Task<IActionResult> GetTripByDate([HttpTrigger("get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             await TripRepository<Trip>.Initialize();
 
             string date = req.Query["date"];
@@ -167,6 +174,7 @@ namespace phynixnetapi
         [FunctionName("GetTripUserId")]
         public static async Task<IActionResult> GetTripUserId([HttpTrigger("get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             string userid = req.Query["userid"];
 
             var trips = TripRepository<Trip>.GetItems($"Select * from TripData t where t.UserId = '{userid}' ");
@@ -182,6 +190,7 @@ namespace phynixnetapi
         [FunctionName("GetTripBasedOnRate")]
         public static async Task<IActionResult> GetTripBasedOnRate([HttpTrigger("get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             await TripRepository<Trip>.Initialize();
 
             string rate = req.Query["rate"];
@@ -199,6 +208,7 @@ namespace phynixnetapi
         [FunctionName("AddTripRating")]
         public static async Task<IActionResult> AddTripRating([HttpTrigger("post", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             string requestBody = new StreamReader(req.Body).ReadToEnd();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 

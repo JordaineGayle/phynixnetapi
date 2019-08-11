@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
+using Newtonsoft.Json;
 using phynixnetapi.Data;
 using phynixnetapi.Helpers;
 using phynixnetapi.Model;
@@ -18,33 +20,35 @@ namespace phynixapi.UserFunc
     {
 
         [FunctionName("CreateAdmin")]
-        public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequestMessage req, TraceWriter log)
+        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequest req)
         {
-			User user = await req.Content.ReadAsAsync<User>();
+			
+            string requestBody = new StreamReader(req.Body).ReadToEnd();
+            User user = JsonConvert.DeserializeObject<User>(requestBody);
 
-			await UserRepository<User>.Initialize();
+            await UserRepository<User>.Initialize();
 
 
 			if (user == null)
 			{
-				return req.CreateResponse(HttpStatusCode.OK,"User Cannot Be Null");
+				return (ActionResult)new OkObjectResult("User Cannot Be Null");
 			}
 
 			if (string.IsNullOrEmpty(user.Email))
 			{
-				return req.CreateResponse(HttpStatusCode.OK, "An email address is needed for this request");
+				return (ActionResult)new OkObjectResult("An email address is needed for this request");
 			}
 
 			var udb = UserRepository<User>.GetItems($"Select * from UserData u where u.Email = '{user.Email}'");
 
 			if(udb != null && udb.Count() > 0)
 			{
-				return req.CreateResponse(HttpStatusCode.OK, "User already exist, please login or activate account to continue");
+				return (ActionResult)new OkObjectResult("User already exist, please login or activate account to continue");
 			}
 
 			if (string.IsNullOrEmpty(user.Password))
 			{
-				return req.CreateResponse(HttpStatusCode.OK, "A Password is needed for this request");
+				return (ActionResult)new OkObjectResult("A Password is needed for this request");
 			}
 
 
@@ -61,11 +65,11 @@ namespace phynixapi.UserFunc
 
 				//Rider rider = u as Rider;
 
-				return req.CreateResponse(HttpStatusCode.OK, "Your account has been created. Admin will contact via the number provided to complete the activation process.");
+				return (ActionResult)new OkObjectResult("Your account has been created. Admin will contact via the number provided to complete the activation process.");
 			}
 			catch (Exception ex)
 			{
-				return req.CreateResponse(HttpStatusCode.OK, "An error has occured");
+				return (ActionResult)new OkObjectResult("An error has occured");
 			}
 		}
 
