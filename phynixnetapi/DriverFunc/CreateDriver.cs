@@ -23,20 +23,25 @@ namespace phynixnetapi.DriverFunc
 	public static class CreateDriver
 	{
 		[FunctionName("CreateDriver")]
-		public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequestMessage req)
+		public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequest req)
 		{
-			Driver user = await req.Content.ReadAsAsync<Driver>();
+            //Driver user = await req.Content.ReadAsAsync<Driver>();
 
-			await DriverRepository<Driver>.Initialize();
+            //req.IsValidToken();
+
+            string requestBody = new StreamReader(req.Body).ReadToEnd();
+            Driver user  = JsonConvert.DeserializeObject<Driver>(requestBody);
+
+            await DriverRepository<Driver>.Initialize();
 
 			if (user == null)
 			{
-				req.CreateResponse(HttpStatusCode.OK, "User cannot be null or empty");
+                return (ActionResult)new OkObjectResult("User cannot be null or empty");
 			}
 
 			if (string.IsNullOrEmpty(user.Email))
 			{
-				req.CreateResponse(HttpStatusCode.OK, "An email address is needed for this request");
+                return (ActionResult)new OkObjectResult("An email address is needed for this request");
 			}
 
 			try
@@ -45,19 +50,19 @@ namespace phynixnetapi.DriverFunc
 
 				if (udb != null && udb.Count() > 0)
 				{
-					return req.CreateResponse(HttpStatusCode.OK, "Driver already exist, please login or activate account to continue");
+                    return (ActionResult)new OkObjectResult("Driver already exist, please login or activate account to continue");
 				}
 			}
 			catch (Exception ex)
 			{
-				return req.CreateResponse(HttpStatusCode.OK, ex);
+                return (ActionResult)new OkObjectResult(ex);
 			}
 
 
 
 			if (string.IsNullOrEmpty(user.Password))
 			{
-				req.CreateResponse(HttpStatusCode.OK, "A Password is needed for this request");
+                return (ActionResult)new OkObjectResult("A Password is needed for this request");
 			}
 			user.Password = user.Password.EncodeString();
 
@@ -68,19 +73,20 @@ namespace phynixnetapi.DriverFunc
 			{
 				dynamic u = await DriverRepository<Driver>.CreateItemAsync(user);
 
-				//Rider rider = u as Rider;
+                //Rider rider = u as Rider;
 
-				return req.CreateResponse(HttpStatusCode.OK, "Your account has been created. Admin will contact via the number provided to complete the activation process.");
+                return (ActionResult)new OkObjectResult("Your account has been created. Admin will contact via the number provided to complete the activation process.");
 			}
 			catch (Exception ex)
 			{
-				return req.CreateResponse(HttpStatusCode.OK, "An error has occured");
+                return (ActionResult)new OkObjectResult("An error has occured");
 			}
 		}
 
         [FunctionName("GetAllDrivers")]
-        public static async Task<HttpResponseMessage> GetADrivers([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequestMessage req)
+        public static async Task<IActionResult> GetADrivers([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             try
             {
                 //User user = await req.Content.ReadAsAsync<User>();
@@ -91,20 +97,21 @@ namespace phynixnetapi.DriverFunc
 
                 if (drivers == null || drivers.Count() <= 0)
                 {
-                    return req.CreateResponse(HttpStatusCode.NoContent, "No Avilable Drivrs In The System.");
+                    return (ActionResult)new OkObjectResult("No Avilable Drivrs In The System.");
                 }
 
-                return req.CreateResponse(HttpStatusCode.OK, drivers);
+                return (ActionResult)new OkObjectResult(drivers);
             }
             catch (Exception ex)
             {
-                return req.CreateResponse(HttpStatusCode.InternalServerError, ex);
+                return (ActionResult)new OkObjectResult(ex);
             }
         }
 
         [FunctionName("GetConnectedDriver")]
-        public static async Task<HttpResponseMessage> GetConDrivers([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequestMessage req)
+        public static async Task<IActionResult> GetConDrivers([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             try
             {
                 // User user = await req.Content.ReadAsAsync<Driver>();
@@ -115,21 +122,22 @@ namespace phynixnetapi.DriverFunc
 
                 if (drivers == null || drivers.Count() <= 0)
                 {
-                    return req.CreateResponse(HttpStatusCode.NoContent, "No Avilable Drivrs In The System.");
+                    return (ActionResult)new OkObjectResult("No Avilable Drivrs In The System.");
                 }
 
-                return req.CreateResponse(HttpStatusCode.OK, drivers);
+                return (ActionResult)new OkObjectResult(drivers);
             }
             catch (Exception ex)
             {
-                return req.CreateResponse(HttpStatusCode.InternalServerError, ex);
+                return (ActionResult)new OkObjectResult(ex);
             }
         }
 
 
         [FunctionName("GetInactiveDrivers")]
-        public static async Task<HttpResponseMessage> GetInactiveDrivers([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequestMessage req)
+        public static async Task<IActionResult> GetInactiveDrivers([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             try
             {
                 // User user = await req.Content.ReadAsAsync<Driver>();
@@ -140,14 +148,14 @@ namespace phynixnetapi.DriverFunc
 
                 if (drivers == null || drivers.Count() <= 0)
                 {
-                    return req.CreateResponse(HttpStatusCode.NoContent, "No Avilable Drivrs In The System.");
+                    return (ActionResult)new OkObjectResult("No Avilable Drivrs In The System.");
                 }
 
-                return req.CreateResponse(HttpStatusCode.OK, drivers);
+                return (ActionResult)new OkObjectResult(drivers);
             }
             catch (Exception ex)
             {
-                return req.CreateResponse(HttpStatusCode.InternalServerError, ex);
+                return (ActionResult)new OkObjectResult(ex);
             }
         }
 
@@ -155,6 +163,7 @@ namespace phynixnetapi.DriverFunc
         [FunctionName("GetDriverById")]
         public static async Task<IActionResult> GetDriverById([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             try
             {
                 string id = req.Query["id"];
@@ -179,6 +188,7 @@ namespace phynixnetapi.DriverFunc
         [FunctionName("GetDriversOnTrip")]
         public static async Task<IActionResult> GetDriversOnTrip([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             try
             {
 
@@ -202,6 +212,7 @@ namespace phynixnetapi.DriverFunc
         [FunctionName("ActivateDriver")]
         public static async Task<IActionResult> ActivateDriver([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             try
             {
 
@@ -236,6 +247,7 @@ namespace phynixnetapi.DriverFunc
         [FunctionName("CollectDriverInfo")]
         public static async Task<IActionResult> CollectDriverInfo([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]HttpRequest req)
         {
+            req.IsValidToken();
             //await DriverRepository<Driver>.Initialize();
 
             try
